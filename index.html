@@ -112,7 +112,7 @@ canvas{max-width:100%;margin:1rem 0}
     <option>Other senior academic</option>
   </select>
   <div class="btn-row" style="justify-content:space-between;align-items:center">
-    <button class="btn" onclick="showScreen('s-dashboard');loadDashboard()">View all schools →</button>
+    <button class="btn" onclick="requestDashboard()">View all schools →</button>
     <button class="btn btn-primary" onclick="startDiag()">Begin diagnostic →</button>
   </div>
 </div>
@@ -412,7 +412,7 @@ function buildReport(scores, lvl){
 
   html += `<div class="btn-row" style="margin-top:1.5rem">
     <button class="btn" onclick="showScreen('s-intro')">← Start again</button>
-    <button class="btn btn-primary" onclick="showScreen('s-dashboard');loadDashboard()">View all schools →</button>
+    <button class="btn btn-primary" onclick="requestDashboard()">View all schools →</button>
   </div>`;
 
   document.getElementById('report-content').innerHTML = html;
@@ -564,6 +564,23 @@ function showDash(tab, btn){
   document.getElementById('dash-detail').style.display   = tab==='detail'?'block':'none';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
+}
+
+// ── Dashboard password ──
+const DASH_PASSWORD = 'R@ngerFan 1978';
+let dashUnlocked = false;
+
+function requestDashboard(){
+  if(dashUnlocked){ showScreen('s-dashboard'); loadDashboard(); return; }
+  const pwd = prompt('Enter the password to view all schools:');
+  if(pwd === null) return; // cancelled
+  if(pwd === DASH_PASSWORD){
+    dashUnlocked = true;
+    showScreen('s-dashboard');
+    loadDashboard();
+  } else {
+    alert('Incorrect password. Please try again.');
+  }
 }
 </script>
 </body>
