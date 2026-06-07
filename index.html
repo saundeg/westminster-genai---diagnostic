@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenAI Governance Maturity Diagnostic</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh;padding:2rem 1rem}
+.container{max-width:680px;margin:0 auto;background:#fff;border-radius:12px;padding:2rem;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.screen{display:none}.screen.active{display:block}
+h1{font-size:22px;font-weight:600;margin-bottom:.5rem;color:#1a1a1a}
+h2{font-size:18px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
+h3{font-size:15px;font-weight:600;margin-bottom:.4rem;color:#1a1a1a}
+p{font-size:14px;color:#555;line-height:1.7;margin-bottom:.85rem}
+.univ-logo{font-size:12px;color:#aaa;margin-bottom:1.25rem;letter-spacing:.04em;text-transform:uppercase}
+label.field-label{font-size:13px;color:#666;margin-bottom:.35rem;display:block;font-weight:500}
+select{width:100%;padding:.55rem .75rem;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff;margin-bottom:1.25rem;color:#1a1a1a;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center}
+.btn-row{display:flex;gap:.75rem;margin-top:1.5rem;justify-content:flex-end}
+.btn{padding:.6rem 1.25rem;border-radius:8px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#444;font-family:inherit;transition:all .15s}
+.btn:hover{background:#f5f5f3}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5;font-weight:500}
+.btn-primary:hover{background:#134e8a}
+.progress-bar{height:4px;background:#eee;border-radius:2px;margin-bottom:1.5rem;overflow:hidden}
+.progress-fill{height:100%;background:#185FA5;border-radius:2px;transition:width .3s}
+.q-num{font-size:11px;color:#aaa;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.04em}
+.q-text{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:1rem;line-height:1.5}
+.options{display:flex;flex-direction:column;gap:.5rem}
+.opt{width:100%;text-align:left;padding:.85rem 1rem;border:1px solid #e0e0dc;border-radius:8px;cursor:pointer;background:#fff;transition:all .15s;display:flex;align-items:flex-start;gap:.75rem;font-family:inherit}
+.opt:hover{background:#f8f8f6;border-color:#ccc}
+.opt.selected{border-color:#185FA5;background:#EBF3FC}
+.opt-radio{width:16px;height:16px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.opt.selected .opt-radio{border-color:#185FA5;background:#185FA5}
+.opt.selected .opt-radio::after{content:'';width:6px;height:6px;background:#fff;border-radius:50%}
+.opt-content{flex:1;min-width:0}
+.opt-label{font-size:14px;color:#1a1a1a;line-height:1.5;display:block}
+.opt-hint{font-size:12px;color:#999;margin-top:.2rem;display:block}
+/* Report */
+.report-header{margin-bottom:1.5rem}
+.level-badge{display:inline-block;padding:.3rem .9rem;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:.75rem}
+.overall-score{font-size:13px;color:#666;margin-bottom:1rem}
+canvas{max-width:100%;margin:1rem 0}
+.domain-row{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0f0ee}
+.domain-row:last-child{border-bottom:none}
+.domain-name{font-size:13px;color:#1a1a1a;width:160px;flex-shrink:0}
+.domain-bar-wrap{flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden}
+.domain-bar-fill{height:100%;border-radius:4px}
+.domain-level{font-size:12px;color:#666;width:80px;text-align:right;flex-shrink:0}
+.fb-box{padding:.9rem 1rem;border-radius:8px;margin-top:.5rem;border-left:3px solid #185FA5;background:#f8f8f6;margin-bottom:.5rem}
+.fb-box p{margin-bottom:.5rem;font-size:13px;color:#444;line-height:1.6}
+.fb-box p:last-child{margin-bottom:0}
+.domain-section{margin-bottom:1.25rem;padding:1rem;border:1px solid #e8e8e5;border-radius:10px}
+.domain-section h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#185FA5;margin-bottom:.25rem}
+.chosen-option{font-size:13px;color:#555;margin-bottom:.4rem;padding:.4rem .6rem;background:#f5f5f3;border-radius:6px}
+/* Dashboard */
+.tab-row{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid #eee;padding-bottom:.75rem}
+.tab{font-size:14px;color:#666;cursor:pointer;padding:.3rem .75rem;border-radius:8px;background:transparent;border:none;font-family:inherit;transition:all .15s}
+.tab:hover{background:#f5f5f3}
+.tab.active{color:#185FA5;background:#EBF3FC;font-weight:500}
+.school-card{background:#fff;border:1px solid #e8e8e5;border-radius:10px;padding:1rem 1.25rem;margin-bottom:.75rem}
+.school-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;gap:.5rem}
+.school-name{font-size:14px;font-weight:600;color:#1a1a1a}
+.school-meta{font-size:12px;color:#aaa;margin-top:.15rem}
+.mini-bar-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem}
+.mini-bar-name{width:155px;flex-shrink:0;font-size:12px;color:#555}
+.mini-bar-wrap{flex:1;height:5px;background:#eee;border-radius:3px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:3px}
+.stat-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.stat-box{background:#f8f8f6;border-radius:8px;padding:.75rem 1rem;flex:1;min-width:100px}
+.stat-val{font-size:22px;font-weight:600;color:#185FA5}
+.stat-label{font-size:12px;color:#888;margin-top:.15rem}
+.status-msg{font-size:13px;color:#888;margin-top:.75rem;min-height:1.2em}
+.status-msg.error{color:#993C1D}
+.status-msg.success{color:#3B6D11}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid #ddd;border-top-color:#185FA5;border-radius:50%;animation:spin .7s linear infinite;margin-right:.4rem;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dash-section-title{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:.75rem;margin-top:1.25rem}
+.empty-state{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+@media(max-width:500px){.domain-name,.mini-bar-name{width:110px;font-size:11px}.domain-level{width:60px}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="screen active" id="s-intro">
+  <div class="univ-logo">University of Westminster</div>
+  <h1>GenAI Governance Maturity Diagnostic</h1>
+  <p>This diagnostic helps your school understand how effectively the university's generative AI policy is being implemented in practice. It covers six dimensions of maturity and takes around 5–7 minutes to complete.</p>
+  <p>Your results generate an instant school report and contribute to a university-wide picture of where schools are and where support is most needed.</p>
+  <label class="field-label">Select your school</label>
+  <select id="school-select">
+    <option value="">— please select —</option>
+    <option>School of Architecture and Cities</option>
+    <option>School of Computer Science and Engineering</option>
+    <option>Westminster School of Arts</option>
+    <option>Westminster School of Media and Communications</option>
+    <option>School of Humanities</option>
+    <option>School of Life Sciences</option>
+    <option>School of Social Sciences</option>
+    <option>Westminster Law School</option>
+    <option>School of Applied Management</option>
+    <option>School of Finance and Accounting</option>
+    <option>School of Management and Marketing</option>
+    <option>School of Organisations, Economy and Society</option>
+  </select>
+  <label class="field-label">Your role</label>
+  <select id="role-select">
+    <option value="">— please select —</option>
+    <option>Head of School</option>
+    <option>Associate/Assistant Head of School</option>
+    <option>Director of Learning and Teaching</option>
+    <option>Other senior academic</option>
+  </select>
+  <div class="btn-row" style="justify-content:space-between;align-items:center">
+    <button class="btn" onclick="showScreen('s-dashboard');loadDashboard()">View all schools →</button>
+    <button class="btn btn-primary" onclick="startDiag()">Begin diagnostic →</button>
+  </div>
+</div>
+
+<div class="screen" id="s-questions">
+  <div class="univ-logo">University of Westminster</div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div id="q-container"></div>
+  <div class="btn-row">
+    <button class="btn" id="btn-back" onclick="navQ(-1)">← Back</button>
+    <button class="btn btn-primary" id="btn-next" onclick="navQ(1)">Next →</button>
+  </div>
+</div>
+
+<div class="screen" id="s-report">
+  <div id="report-content"></div>
+</div>
+
+<div class="screen" id="s-dashboard">
+  <div class="univ-logo">University of Westminster</div>
+  <div class="tab-row">
+    <button class="tab active" onclick="showDash('overview',this)">Overview</button>
+    <button class="tab" onclick="showDash('detail',this)">School detail</button>
+  </div>
+  <div id="dash-overview"></div>
+  <div id="dash-detail" style="display:none"></div>
+  <div class="btn-row" style="margin-top:1.5rem;justify-content:flex-start">
+    <button class="btn" onclick="showScreen('s-intro')">← Back to start</button>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── Google Sheets backend ──
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwcRF4K8mUhdpE7Ao5uSJEZsQ6anbwi2xTYRLPxtc6B8Vf8hwNRWXxxUylLhwzJ5Coyww/exec';
+
+const DOMAINS = ['Student communication','Contextualisation','Assessment design','Staff capability','Student AI literacy','Governance & oversight'];
+const LEVELS  = ['Awareness','Developing','Embedded','Leading'];
+const LEVEL_COLORS     = ['#D85A30','#EF9F27','#639922','#185FA5'];
+const LEVEL_BG_COLORS  = ['#FBEEE9','#FEF4E5','#EBF3DA','#EBF3FC'];
+const LEVEL_TEXT_COLORS= ['#7A2E12','#7A4D08','#3B6D11','#0E3D6E'];
+
+const QUESTIONS = [
+  {
+    domain: 0,
+    text: "How has your school communicated the university's generative AI guidance to students?",
+    options: [
+      {label:"We rely on the university-level guidance without any school-level supplement", hint:"Students are directed to university materials only", score:1},
+      {label:"We have shared the university guidance with some informal school-level commentary", hint:"Some contextualisation but not formalised", score:2},
+      {label:"We have produced a formal school-level addendum or guidance document that is actively shared with students", hint:"Formalised and communicated", score:3},
+      {label:"We have a regularly reviewed, discipline-specific guidance suite embedded in student induction and module materials", hint:"Systematic, reviewed, and deeply embedded", score:4}
+    ],
+    feedback: [
+      "Your school is currently relying on university-level guidance without adding any school-specific context. While the university materials provide a foundation, students benefit greatly from discipline-specific examples and expectations. Consider developing a short school-level addendum that translates the university policy into the specific contexts your students work in, such as discipline-appropriate examples of permitted and non-permitted GenAI use.",
+      "Your school has taken a useful first step by sharing the university guidance with some informal commentary. Formalising this into a written school-level document would give students greater clarity and confidence about expectations in their disciplines. A concise, co-produced addendum — ideally developed with input from both staff and students — would strengthen this further and make the guidance more actionable.",
+      "Your school has developed a formal school-level guidance document, which represents a strong commitment to clear communication. To move toward Leading, consider building systematic review cycles into the process so the guidance keeps pace with rapidly evolving GenAI capabilities, and ensure it is actively embedded at key touchpoints such as induction, assessment briefings, and module handbooks.",
+      "Your school exemplifies best practice in student communication around GenAI. The combination of disciplinary specificity, regular review, and embedding within induction and module materials ensures students encounter clear, relevant, and up-to-date guidance at the moments they most need it. Sharing your approach with other schools could support university-wide improvement."
+    ]
+  },
+  {
+    domain: 1,
+    text: "How well does your school contextualise the university's GenAI policy for your specific disciplines?",
+    options: [
+      {label:"We apply the university policy as written without discipline-specific interpretation", hint:"No contextualisation beyond university level", score:1},
+      {label:"Individual module leaders interpret the policy for their own modules informally", hint:"Informal and inconsistent contextualisation", score:2},
+      {label:"The school has produced discipline-specific guidance that interprets the policy for our subject areas", hint:"School-level contextualisation in place", score:3},
+      {label:"We have a live, co-produced framework that maps GenAI use across programme levels and disciplines, regularly updated with staff and student input", hint:"Comprehensive, collaborative, and maintained", score:4}
+    ],
+    feedback: [
+      "Applying the university policy without discipline-specific interpretation can leave both staff and students uncertain about how the rules apply in practice to their subject area. Different disciplines have very different relationships with GenAI — from creative arts to law to engineering — and students deserve guidance that reflects those differences. A useful starting point is to convene a small staff group to discuss where discipline-specific examples or caveats are most needed.",
+      "Informal module-level interpretation is a natural starting point, but it can lead to inconsistency across the school, which students find confusing and which creates equity risks around assessment. Moving toward a shared school-level framework — even a simple matrix of permitted uses by discipline or programme — would provide consistency while still allowing module-level flexibility where it is genuinely appropriate.",
+      "Having school-level discipline-specific guidance is a significant achievement and demonstrates a mature understanding of how the university policy needs to be translated for your context. The next step is to build in mechanisms for regular review and to actively involve students in the process — their experience of GenAI use in learning and assessment contexts is a vital source of insight for keeping the guidance relevant.",
+      "Your school is operating at the leading edge of policy contextualisation, with a live, co-produced framework that maps GenAI expectations across disciplines and programme levels. This is exactly the kind of nuanced, student-informed approach that other schools should be working towards. Consider documenting your process and sharing it through university learning and teaching networks."
+    ]
+  },
+  {
+    domain: 2,
+    text: "How is GenAI being considered in your school's approach to assessment design?",
+    options: [
+      {label:"We have not yet formally reviewed our assessments in light of GenAI capabilities", hint:"No systematic review undertaken", score:1},
+      {label:"Some individual module leaders have adjusted assessments informally in response to GenAI", hint:"Ad hoc, not coordinated", score:2},
+      {label:"The school has undertaken a structured review of its assessment portfolio with GenAI in mind", hint:"Structured school-level review completed", score:3},
+      {label:"Assessment design is now systematically informed by a GenAI framework, with programme-level review cycles and principles embedded in validation processes", hint:"Embedded in governance and validation", score:4}
+    ],
+    feedback: [
+      "Without a formal review of assessments in light of GenAI capabilities, your school risks both academic integrity concerns and missed opportunities to design assessments that genuinely test graduate-level skills. Starting with a structured mapping exercise — identifying which current assessments are most vulnerable to GenAI substitution and which could be redesigned to integrate GenAI appropriately — would provide a strong evidence base for action.",
+      "Individual module-level responses to GenAI in assessment are understandable and often innovative, but without coordination they can create inconsistency and increase burden on students who face different expectations across their programme. Bringing these individual efforts together through a school-level conversation would help identify good practice to share, flag areas of concern, and move toward a more coherent approach.",
+      "Completing a structured school-level assessment review is a significant and important step. To build on this, consider how the insights from the review can be embedded into ongoing processes — particularly programme review and module validation — so that GenAI considerations become a routine part of assessment design rather than a one-off exercise. Sharing outcomes with students would also help build trust and transparency.",
+      "Your school is leading the way in integrating GenAI considerations into assessment governance. By embedding a GenAI framework into validation processes and maintaining programme-level review cycles, you are building institutional resilience and ensuring assessment integrity is sustained over time. This kind of systemic approach is what the sector needs, and your experience could be invaluable to other schools and to the university's assessment strategy."
+    ]
+  },
+  {
+    domain: 3,
+    text: "What is the state of staff capability and confidence in relation to generative AI in your school?",
+    options: [
+      {label:"Staff awareness and capability varies widely and we have not yet taken a coordinated approach to development", hint:"Uncoordinated, significant variation", score:1},
+      {label:"We have signposted staff to centrally available CPD resources but take-up is patchy", hint:"Signposting only, low engagement", score:2},
+      {label:"We have delivered or facilitated structured CPD for staff on GenAI in learning, teaching and assessment", hint:"Structured CPD delivered", score:3},
+      {label:"We have a sustained, school-level GenAI CPD programme aligned to our disciplines, with champions, peer learning, and ongoing engagement mechanisms", hint:"Sustained, disciplinary, peer-supported", score:4}
+    ],
+    feedback: [
+      "Wide variation in staff capability around GenAI is one of the most significant risks to consistent and fair implementation of the university's policy. Staff who lack confidence in what GenAI can and cannot do are less well positioned to advise students, design appropriate assessments, or identify potential misuse. A useful first step is to map current staff confidence levels — even through a brief anonymous survey — to understand where the most urgent development needs lie.",
+      "Signposting to central CPD resources is a helpful starting point, but low take-up is a common outcome when development is not embedded in school-level practice or connected to the specific disciplinary contexts staff work in. Consider how you might make GenAI CPD more accessible and relevant — for example, through a school-level lunch session, a community of practice, or by identifying one or two enthusiastic staff members to act as informal champions.",
+      "Delivering structured CPD for staff on GenAI demonstrates real commitment to building capability across the school. To sustain and deepen this, consider how you can move from one-off events toward ongoing engagement — for example, through regular sharing of emerging practice, a school GenAI lead or champion, or peer observation and discussion focused on AI-related pedagogy.",
+      "Your school has built a genuinely sustainable model for staff development on GenAI, with disciplinary relevance, peer support, and ongoing engagement mechanisms. This is the kind of approach that creates lasting cultural change rather than short-term awareness. Sharing your model — including what has and has not worked — would be enormously valuable to other schools and could inform university-wide CPD strategy."
+    ]
+  },
+  {
+    domain: 4,
+    text: "How is your school developing students' critical understanding of generative AI?",
+    options: [
+      {label:"We rely on students gaining awareness of GenAI through their own independent means", hint:"No structured approach to student AI literacy", score:1},
+      {label:"Some modules touch on AI literacy incidentally but there is no systematic approach", hint:"Incidental and unsystematic", score:2},
+      {label:"We have embedded AI literacy content into our programmes, helping students understand how to use GenAI critically and responsibly", hint:"Embedded AI literacy in programmes", score:3},
+      {label:"AI literacy is a defined graduate attribute in our school, with scaffolded development across programme levels and assessed competencies", hint:"Graduate attribute, scaffolded, assessed", score:4}
+    ],
+    feedback: [
+      "Leaving students to develop their own understanding of GenAI independently creates significant equity risks — students with greater personal exposure to technology or more technologically engaged social networks will develop very different capabilities to those without. For disciplines where GenAI is increasingly present in professional practice, this gap has real consequences for graduate employability and professional readiness. Even a light-touch introduction to critical AI literacy within existing modules would be a meaningful first step.",
+      "Incidental coverage of AI literacy across some modules is better than nothing, but it means that students' understanding of GenAI is inconsistent and often shallow. A more systematic approach — for example, identifying two or three key AI literacy concepts that all students should encounter, and mapping where in the curriculum these could be most meaningfully addressed — would provide a stronger foundation without necessarily requiring new curriculum content.",
+      "Embedding AI literacy content into your programmes positions your graduates well for a world in which GenAI is increasingly present in professional and civic life. To move toward leading practice, consider how AI literacy can be scaffolded progressively across programme levels and how it might be assessed — not just taught. Moving from an implicit to an explicit graduate attribute would also signal its importance to students, staff, and external stakeholders.",
+      "Defining AI literacy as a graduate attribute, with scaffolded development and assessed competencies, puts your school at the forefront of graduate capability development. This approach will increasingly differentiate your graduates in a competitive labour market and positions the school as a leader in responsible and critical engagement with emerging technology. Sharing your framework and assessment approaches with other schools and the wider HE sector would have significant impact."
+    ]
+  },
+  {
+    domain: 5,
+    text: "How effectively does your school's governance support the ongoing management of generative AI in learning and teaching?",
+    options: [
+      {label:"GenAI issues arise ad hoc and are dealt with individually without a clear governance structure", hint:"Reactive and unstructured", score:1},
+      {label:"GenAI is discussed at school committees when issues arise but it is not a standing agenda item", hint:"Reactive committee discussion only", score:2},
+      {label:"GenAI in learning and teaching is a standing item in our school governance, with clear ownership and reporting lines", hint:"Standing governance item with ownership", score:3},
+      {label:"We have a comprehensive school GenAI governance framework with designated leads, regular data review, stakeholder engagement, and links to university-level governance", hint:"Comprehensive, data-informed, connected", score:4}
+    ],
+    feedback: [
+      "Dealing with GenAI issues on an ad hoc basis without governance structures in place means your school is likely to be reactive rather than proactive, and risks inconsistent decision-making. As GenAI continues to evolve rapidly, the volume and complexity of issues is likely to increase. Establishing even basic governance — for example, designating a lead member of staff and ensuring GenAI is a standing item at school learning and teaching committee — would provide a foundation for more structured management.",
+      "Discussing GenAI at committee level when issues arise is a useful starting point, but reactive governance means the school is always responding to problems rather than anticipating them. Making GenAI a standing agenda item — with a named lead responsible for monitoring and reporting — would enable more proactive management and create a clearer record of decisions, which is important both for consistency and for external scrutiny.",
+      "Having GenAI as a standing governance item with clear ownership is a strong position. To move toward leading practice, consider how your governance can become more data-informed — for example, by routinely reviewing academic integrity data with a GenAI lens, gathering student and staff feedback on the effectiveness of your policies, and ensuring your school governance is connected to and informing university-level GenAI governance.",
+      "Your school's GenAI governance framework is comprehensive and well-connected, with the data-informed review and stakeholder engagement that effective governance requires. This positions the school to respond quickly and consistently to emerging issues and to contribute actively to university-level policy development. Documenting and sharing your governance framework could serve as a model for other schools and help build institutional coherence across the university."
+    ]
+  }
+];
+
+// ── State ──
+let currentQ = 0;
+let answers  = new Array(QUESTIONS.length).fill(null);
+let school   = '';
+let role     = '';
+let radarChart = null;
+let dashRadarChart = null;
+let allSchoolData = [];
+
+// ── Helpers ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function levelIdx(score){
+  if(score<=1) return 0;
+  if(score<=2) return 1;
+  if(score<=3) return 2;
+  return 3;
+}
+
+function domainScore(domainIdx){
+  const q = QUESTIONS.filter(q=>q.domain===domainIdx);
+  const ans = q.map(q=>answers[QUESTIONS.indexOf(q)]);
+  if(ans.some(a=>a===null)) return null;
+  return ans.reduce((s,a)=>s+a,0)/ans.length;
+}
+
+// ── Intro ──
+function startDiag(){
+  school = document.getElementById('school-select').value;
+  role   = document.getElementById('role-select').value;
+  if(!school){ alert('Please select your school.'); return; }
+  if(!role)  { alert('Please select your role.'); return; }
+  currentQ = 0;
+  answers  = new Array(QUESTIONS.length).fill(null);
+  renderQ();
+  showScreen('s-questions');
+}
+
+// ── Questions ──
+function renderQ(){
+  const q   = QUESTIONS[currentQ];
+  const pct = ((currentQ)/(QUESTIONS.length))*100;
+  document.getElementById('prog').style.width = pct+'%';
+  document.getElementById('btn-back').style.visibility = currentQ===0?'hidden':'visible';
+
+  const isLast = currentQ===QUESTIONS.length-1;
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.textContent = isLast ? 'Submit →' : 'Next →';
+
+  let html = `<div class="q-num">Question ${currentQ+1} of ${QUESTIONS.length} &nbsp;·&nbsp; ${DOMAINS[q.domain]}</div>
+              <div class="q-text">${q.text}</div>
+              <div class="options">`;
+  q.options.forEach((opt,i)=>{
+    const sel = answers[currentQ]===opt.score ? 'selected' : '';
+    html += `<button class="opt ${sel}" onclick="selectOpt(${opt.score},this)">
+               <span class="opt-radio"></span>
+               <span class="opt-content">
+                 <span class="opt-label">${opt.label}</span>
+                 <span class="opt-hint">${opt.hint}</span>
+               </span>
+             </button>`;
+  });
+  html += '</div>';
+  document.getElementById('q-container').innerHTML = html;
+}
+
+function selectOpt(score, el){
+  answers[currentQ] = score;
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function navQ(dir){
+  if(dir===1 && answers[currentQ]===null){ alert('Please select an answer before continuing.'); return; }
+  if(dir===-1 && currentQ===0) return;
+  if(dir===1 && currentQ===QUESTIONS.length-1){ submitDiag(); return; }
+  currentQ += dir;
+  renderQ();
+}
+
+// ── Submit & Report ──
+async function submitDiag(){
+  const scores = DOMAINS.map((_,i)=>domainScore(i));
+  const avg    = scores.reduce((s,v)=>s+(v||0),0)/scores.length;
+  const lvl    = levelIdx(avg);
+
+  buildReport(scores, lvl);
+  showScreen('s-report');
+
+  await saveResult(school, role, scores, lvl);
+}
+
+async function saveResult(sch, rl, scores, lvl){
+  const payload = {
+    school: sch,
+    role: rl,
+    date: new Date().toLocaleDateString('en-GB'),
+    scores: scores,
+    overallLevel: LEVELS[lvl]
+  };
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  } catch(e){ console.warn('Could not save to sheet:', e); }
+}
+
+function buildReport(scores, lvl){
+  const lc = LEVEL_COLORS[lvl];
+  const lb = LEVEL_BG_COLORS[lvl];
+  const lt = LEVEL_TEXT_COLORS[lvl];
+
+  let html = `<div class="report-header">
+    <div class="univ-logo">University of Westminster</div>
+    <h1>Your School Report</h1>
+    <p style="margin-bottom:.5rem"><strong>${school}</strong> &nbsp;·&nbsp; ${role}</p>
+    <div class="level-badge" style="background:${lb};color:${lt}">Overall maturity: ${LEVELS[lvl]}</div>
+  </div>`;
+
+  // Spider chart
+  html += `<canvas id="radarChart" height="280"></canvas>`;
+
+  // Domain bars
+  html += `<div style="margin:1rem 0">`;
+  DOMAINS.forEach((d,i)=>{
+    const s = scores[i]||0;
+    const li = levelIdx(s);
+    const pct = (s/4)*100;
+    html += `<div class="domain-row">
+      <span class="domain-name">${d}</span>
+      <div class="domain-bar-wrap"><div class="domain-bar-fill" style="width:${pct}%;background:${LEVEL_COLORS[li]}"></div></div>
+      <span class="domain-level">${LEVELS[li]}</span>
+    </div>`;
+  });
+  html += `</div><h2 style="margin-top:1.5rem">Domain Feedback</h2>`;
+
+  // Per-domain feedback
+  QUESTIONS.forEach((q,qi)=>{
+    const score = answers[qi];
+    const fi    = score-1; // 0-indexed
+    const li    = levelIdx(score);
+    html += `<div class="domain-section">
+      <h3>${DOMAINS[q.domain]}</h3>
+      <div class="chosen-option">${q.options[fi].label}</div>
+      <div class="fb-box"><p>${q.feedback[fi]}</p></div>
+    </div>`;
+  });
+
+  html += `<div class="btn-row" style="margin-top:1.5rem">
+    <button class="btn" onclick="showScreen('s-intro')">← Start again</button>
+    <button class="btn btn-primary" onclick="showScreen('s-dashboard');loadDashboard()">View all schools →</button>
+  </div>`;
+
+  document.getElementById('report-content').innerHTML = html;
+
+  // Draw radar
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if(radarChart){ radarChart.destroy(); }
+  radarChart = new Chart(ctx,{
+    type:'radar',
+    data:{
+      labels: DOMAINS,
+      datasets:[{
+        label: school,
+        data: scores.map(s=>s||0),
+        backgroundColor: 'rgba(24,95,165,0.15)',
+        borderColor: '#185FA5',
+        borderWidth: 2,
+        pointBackgroundColor: '#185FA5',
+        pointRadius: 4
+      }]
+    },
+    options:{
+      responsive:true,
+      scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},pointLabels:{font:{size:11}}}},
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+
+// ── Dashboard ──
+async function loadDashboard(){
+  document.getElementById('dash-overview').innerHTML = '<p style="color:#aaa;font-size:14px"><span class="spinner"></span>Loading results…</p>';
+  document.getElementById('dash-detail').innerHTML   = '';
+
+  try {
+    const resp = await fetch(SHEET_URL+'?action=get');
+    const data = await resp.json();
+    allSchoolData = data;
+    renderDashOverview();
+    renderDashDetail();
+  } catch(e){
+    document.getElementById('dash-overview').innerHTML = `<p class="status-msg error">Could not load data from Google Sheets. Check your network connection or Apps Script deployment.</p>`;
+    console.error(e);
+  }
+}
+
+function renderDashOverview(){
+  const el = document.getElementById('dash-overview');
+  if(!allSchoolData || allSchoolData.length===0){
+    el.innerHTML = '<div class="empty-state">No school responses recorded yet.</div>';
+    return;
+  }
+
+  const n = allSchoolData.length;
+  const avgScores = DOMAINS.map((_,i)=>{
+    const vals = allSchoolData.map(s=>s.scores[i]).filter(v=>v!=null);
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  });
+  const overallAvg = avgScores.reduce((a,b)=>a+b,0)/avgScores.length;
+  const overallLvl = levelIdx(overallAvg);
+
+  let html = `<div class="stat-row">
+    <div class="stat-box"><div class="stat-val">${n}</div><div class="stat-label">Schools responded</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:${LEVEL_COLORS[overallLvl]}">${LEVELS[overallLvl]}</div><div class="stat-label">University average</div></div>
+  </div>`;
+
+  html += `<canvas id="dashRadar" height="280"></canvas>`;
+
+  html += `<div class="dash-section-title">Average by domain</div>`;
+  DOMAINS.forEach((d,i)=>{
+    const s   = avgScores[i];
+    const li  = levelIdx(s);
+    const pct = (s/4)*100;
+    html += `<div class="domain-row">
+      <span class="domain-name">${d}</span>
+      <div class="domain-bar-wrap"><div class="domain-bar-fill" style="width:${pct}%;background:${LEVEL_COLORS[li]}"></div></div>
+      <span class="domain-level">${LEVELS[li]}</span>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+
+  const ctx2 = document.getElementById('dashRadar').getContext('2d');
+  if(dashRadarChart){ dashRadarChart.destroy(); }
+  dashRadarChart = new Chart(ctx2,{
+    type:'radar',
+    data:{
+      labels: DOMAINS,
+      datasets:[{
+        label:'University average',
+        data: avgScores,
+        backgroundColor:'rgba(24,95,165,0.12)',
+        borderColor:'#185FA5',
+        borderWidth:2,
+        pointBackgroundColor:'#185FA5',
+        pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true,
+      scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},pointLabels:{font:{size:11}}}},
+      plugins:{legend:{display:false}}
+    }
+  });
+}
+
+function renderDashDetail(){
+  const el = document.getElementById('dash-detail');
+  if(!allSchoolData || allSchoolData.length===0){
+    el.innerHTML = '<div class="empty-state">No school responses recorded yet.</div>';
+    return;
+  }
+
+  const sorted = [...allSchoolData].sort((a,b)=>{
+    const avgA = a.scores.reduce((s,v)=>s+(v||0),0)/a.scores.length;
+    const avgB = b.scores.reduce((s,v)=>s+(v||0),0)/b.scores.length;
+    return avgB - avgA;
+  });
+
+  let html = '';
+  sorted.forEach(s=>{
+    const avg = s.scores.reduce((t,v)=>t+(v||0),0)/s.scores.length;
+    const li  = levelIdx(avg);
+    html += `<div class="school-card">
+      <div class="school-header">
+        <div>
+          <div class="school-name">${s.school}</div>
+          <div class="school-meta">${s.role} &nbsp;·&nbsp; ${s.date}</div>
+        </div>
+        <div class="level-badge" style="background:${LEVEL_BG_COLORS[li]};color:${LEVEL_TEXT_COLORS[li]};white-space:nowrap;font-size:12px;padding:.25rem .7rem;border-radius:20px;font-weight:600">${LEVELS[li]}</div>
+      </div>`;
+    DOMAINS.forEach((d,i)=>{
+      const sc  = s.scores[i]||0;
+      const cli = levelIdx(sc);
+      const pct = (sc/4)*100;
+      html += `<div class="mini-bar-row">
+        <span class="mini-bar-name">${d}</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:${pct}%;background:${LEVEL_COLORS[cli]}"></div></div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function showDash(tab, btn){
+  document.getElementById('dash-overview').style.display = tab==='overview'?'block':'none';
+  document.getElementById('dash-detail').style.display   = tab==='detail'?'block':'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+</script>
+</body>
+</html>
